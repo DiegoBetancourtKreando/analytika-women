@@ -1,14 +1,7 @@
-# Railway deployment starts from the apps/api directory
-# This symlinks the root and builds the monorepo
-
-FROM node:22-alpine AS base
-RUN npm i -g turbo
-
-FROM base AS builder
+FROM node:22-alpine AS builder
 WORKDIR /app
 
-# Copy root workspace config
-COPY package.json package-lock.json turbo.json ./
+COPY package.json package-lock.json ./
 COPY apps/api/package.json apps/api/
 COPY apps/web/package.json apps/web/
 COPY packages/types/package.json packages/types/
@@ -17,47 +10,39 @@ COPY packages/config/package.json packages/config/
 COPY packages/ui/package.json packages/ui/
 COPY packages/tsconfig/package.json packages/tsconfig/
 COPY packages/eslint-config/package.json packages/eslint-config/
+COPY turbo.json ./
 
-# Install dependencies
-RUN npm ci
+RUN npm ci 2>&1 || npm install 2>&1
 
-# Copy source code
-COPY apps/api apps/api
-COPY apps/web apps/web
-COPY packages packages
+COPY packages/ packages/
+COPY apps/api/ apps/api/
+COPY apps/web/ apps/web/
 
-# Build shared packages
-RUN npm run build --workspace=packages/types --workspace=packages/utils --workspace=packages/config --workspace=packages/ui 2>/dev/null || true
+RUN npm run build --workspace=packages/types 2>&1 || true
+RUN npm run build --workspace=packages/utils 2>&1 || true  
+RUN npm run build --workspace=packages/config 2>&1 || true
+RUN npm run build --workspace=packages/ui 2>&1 || true
 
-# Build web (frontend)
-RUN npm run build --workspace=apps/web
+ENV NODE_ENV=production
+RUN cd apps/web && npx vite build 2>&1
 
-# Build api (backend)
-RUN npm run build --workspace=apps/api
+RUN cd apps/api && npx nest build 2>&1
 
 FROM node:22-alpine AS runner
 WORKDIR /app
 
-# Install only production deps
-COPY package.json package-lock.json ./
-COPY apps/api/package.json apps/api/
-RUN npm ci --omit=dev --workspace=apps/api 2>/dev/null || npm ci --omit=dev
+RUN npm i -g prisma@6
 
-# Copy built artifacts
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/packages ./packages
 COPY --from=builder /app/apps/api/dist ./apps/api/dist
 COPY --from=builder /app/apps/api/prisma ./apps/api/prisma
-COPY --from=builder /app/apps/api/.env ./apps/api/ 2>/dev/null || true
 COPY --from=builder /app/apps/web/dist ./apps/web/dist
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/apps/api/package.json ./apps/api/
+COPY --from=builder /app/package.json ./
 
 WORKDIR /app/apps/api
 
-# Generate Prisma client (needs schema)
-RUN npx prisma generate
-
 EXPOSE 4000
 
-# Run migrations, seed, then start
-CMD npx prisma migrate deploy && \
-    npx prisma db seed 2>/dev/null || true && \
-    node dist/main
+CMD npx prisma migrate deploy 2>/dev/null; npx prisma db seed 2>/dev/null; node dist/main

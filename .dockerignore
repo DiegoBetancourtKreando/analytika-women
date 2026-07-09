@@ -1,0 +1,10 @@
+node_modules
+dist
+.next
+.turbo
+.git
+*.md
+.env
+.env.local
+.gitignore
+propuesta.txt
