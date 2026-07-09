@@ -12,7 +12,7 @@ async function bootstrap() {
   app.enableVersioning({ type: VersioningType.URI, defaultVersion: '1' });
 
   app.enableCors({
-    origin: process.env.CORS_ORIGIN ?? 'http://localhost:3000',
+    origin: process.env.CORS_ORIGIN ?? '*',
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
@@ -22,8 +22,7 @@ async function bootstrap() {
   app.useStaticAssets(frontendPath, { index: false });
 
   app.use((req: any, res: any, next: any) => {
-    const reqPath = req.path;
-    if (!reqPath.startsWith('/api') && !reqPath.startsWith('/api/')) {
+    if (!req.path.startsWith('/api')) {
       res.sendFile(join(frontendPath, 'index.html'));
     } else {
       next();

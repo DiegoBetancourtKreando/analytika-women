@@ -10,28 +10,26 @@ COPY packages/config/package.json packages/config/
 COPY packages/ui/package.json packages/ui/
 COPY packages/tsconfig/package.json packages/tsconfig/
 COPY packages/eslint-config/package.json packages/eslint-config/
-COPY turbo.json ./
 
-RUN npm ci 2>&1 || npm install 2>&1
+RUN npm install 2>&1
 
 COPY packages/ packages/
 COPY apps/api/ apps/api/
 COPY apps/web/ apps/web/
 
-RUN npm run build --workspace=packages/types 2>&1 || true
-RUN npm run build --workspace=packages/utils 2>&1 || true  
-RUN npm run build --workspace=packages/config 2>&1 || true
-RUN npm run build --workspace=packages/ui 2>&1 || true
-
 ENV NODE_ENV=production
+
+RUN npm run build --workspace=packages/types 2>&1
+RUN npm run build --workspace=packages/utils 2>&1
+RUN npm run build --workspace=packages/config 2>&1
+RUN npm run build --workspace=packages/ui 2>&1
+
 RUN cd apps/web && npx vite build 2>&1
 
 RUN cd apps/api && npx nest build 2>&1
 
 FROM node:22-alpine AS runner
 WORKDIR /app
-
-RUN npm i -g prisma@6
 
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/packages ./packages
@@ -43,6 +41,8 @@ COPY --from=builder /app/package.json ./
 
 WORKDIR /app/apps/api
 
+RUN npx prisma generate 2>&1
+
 EXPOSE 4000
 
-CMD npx prisma migrate deploy 2>/dev/null; npx prisma db seed 2>/dev/null; node dist/main
+CMD node dist/main.js
