@@ -5,12 +5,14 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import { existsSync } from 'fs';
 import { join } from 'path';
 import { AppModule } from './app.module';
+import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   app.setGlobalPrefix('api');
+  app.useGlobalInterceptors(new TransformInterceptor());
 
   app.enableCors({
     origin: process.env.CORS_ORIGIN ?? '*',
