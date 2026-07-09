@@ -88,11 +88,61 @@ export class DynamicFormsService {
     });
   }
 
-  async updateField(fieldId: string, data: { isActive?: boolean }) {
+  async updateField(fieldId: string, data: any) {
     return this.prisma.dynamicField.update({
       where: { id: fieldId },
       data,
     });
+  }
+
+  async createForm(data: { code: string; name: string; description?: string; icon?: string; config?: any }) {
+    return this.prisma.dynamicForm.create({
+      data: {
+        code: data.code,
+        name: data.name,
+        description: data.description,
+        icon: data.icon,
+        config: data.config ?? {},
+        isActive: true,
+      },
+    });
+  }
+
+  async updateForm(code: string, data: any) {
+    return this.prisma.dynamicForm.update({
+      where: { code },
+      data,
+    });
+  }
+
+  async deleteForm(code: string) {
+    await this.prisma.dynamicForm.delete({ where: { code } });
+    return { message: 'Formulario eliminado' };
+  }
+
+  async addField(code: string, data: any) {
+    const form = await this.prisma.dynamicForm.findUnique({ where: { code } });
+    if (!form) throw new NotFoundException(`Formulario "${code}" no encontrado`);
+    return this.prisma.dynamicField.create({
+      data: {
+        formId: form.id,
+        key: data.key,
+        label: data.label,
+        type: data.type,
+        placeholder: data.placeholder,
+        helpText: data.helpText,
+        options: data.options ?? null,
+        validation: data.validation ?? null,
+        conditional: data.conditional ?? null,
+        order: data.order ?? 0,
+        isActive: true,
+      },
+    });
+  }
+
+  async deleteField(fieldId: string) {
+    await this.prisma.dynamicField.delete({ where: { id: fieldId } });
+    return { message: 'Campo eliminado' };
   }
 
   async setupDefaults() {
