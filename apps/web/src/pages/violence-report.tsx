@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Shield, ShieldOff, User, Phone, Mail, Clock, ChevronRight, FileText } from 'lucide-react';
+import { Shield, ShieldOff, User, Phone, Mail, ChevronRight, FileText } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button } from '@analytika/ui';
 import { DynamicForm } from '../components/dynamic-form';
 import { apiGet } from '../services/api';
@@ -55,18 +55,6 @@ export function ViolenceReportPage() {
       </section>
 
       <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-8 rounded-xl border border-red-200 bg-red-50 p-4">
-          <div className="flex items-start gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-100"><Clock className="h-5 w-5 text-red-600" /></div>
-            <div>
-              <p className="font-semibold text-red-900">¿Estás en peligro ahora mismo?</p>
-              <p className="mt-1 text-sm text-red-700">
-                Si necesitas ayuda inmediata, llama al <strong>100</strong> (Línea de Emergencia para Mujeres) o escribe al <strong>WhatsApp 955 410 010</strong>.
-              </p>
-            </div>
-          </div>
-        </motion.div>
-
         <div className="grid gap-8 lg:grid-cols-3">
           <div className="lg:col-span-2">
             <Card>
