@@ -109,7 +109,12 @@ export async function api<T>(
     );
   }
 
-  return json.data ?? json;
+  const result = json.data ?? json;
+  // Unwrap paginated responses: { data: [...], meta: {...} } → [...]
+  if (result && typeof result === 'object' && 'data' in result && Array.isArray(result.data)) {
+    return result.data as T;
+  }
+  return result as T;
 }
 
 export function apiGet<T>(endpoint: string, params?: Record<string, string | number | undefined>) {
