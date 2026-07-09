@@ -103,7 +103,7 @@ export function LoginPage() {
                 </Link>
               </div>
 
-              <Button type="submit" className="w-full" size="lg" isLoading={isLoading}>
+              <Button type="submit" className="w-full" size="lg">
                 <LogIn className="mr-2 h-5 w-5" />
                 Iniciar Sesión
               </Button>
