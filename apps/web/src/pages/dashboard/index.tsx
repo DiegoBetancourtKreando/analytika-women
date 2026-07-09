@@ -23,13 +23,10 @@ import {
   Activity,
   ArrowRight,
   AlertTriangle,
-  CheckCircle2,
-  Clock,
-  BarChart3,
   PieChart as PieChartIcon,
 } from 'lucide-react';
 import { apiGet } from '../../services/api';
-import { ROUTES, VIOLENCE_LEVELS, PROJECT_AREAS } from '../../constants';
+import { ROUTES, VIOLENCE_LEVELS } from '../../constants';
 import {
   BarChart,
   Bar,
@@ -45,27 +42,28 @@ import {
 } from 'recharts';
 
 interface DashboardStats {
-  users: number;
-  projects: number;
-  reports: number;
-  opportunities: number;
-  events: number;
-  certificates: number;
+  counts: {
+    users: number;
+    projects: number;
+    reports: number;
+    opportunities: number;
+    events: number;
+    certificates: number;
+    courses: number;
+    organizations: number;
+  };
   reportsByLevel: { level: string; count: number }[];
-  projectsByArea: { area: string; count: number }[];
-  recentActivity: { id: string; type: string; description: string; date: string }[];
+  projectsByStatus: { status: string; count: number }[];
+  recentUsers: { id: string; firstName: string; lastName: string; email: string; role: string; createdAt: string }[];
+  recentReports: { id: string; reportCode: string; level: string; status: string; createdAt: string }[];
 }
 
 const initialStats: DashboardStats = {
-  users: 0,
-  projects: 0,
-  reports: 0,
-  opportunities: 0,
-  events: 0,
-  certificates: 0,
+  counts: { users: 0, projects: 0, reports: 0, opportunities: 0, events: 0, certificates: 0, courses: 0, organizations: 0 },
   reportsByLevel: [],
-  projectsByArea: [],
-  recentActivity: [],
+  projectsByStatus: [],
+  recentUsers: [],
+  recentReports: [],
 };
 
 const STAT_CARDS = [
@@ -86,13 +84,6 @@ const LEVEL_COLORS: Record<string, string> = {
 
 const AREA_COLORS = ['#7c3aed', '#8b5cf6', '#a78bfa', '#c4b5fd', '#ddd6fe'];
 
-const ACTIVITY_ICONS: Record<string, typeof Activity> = {
-  report: Shield,
-  project: FolderKanban,
-  user: Users,
-  event: Calendar,
-  certificate: Award,
-};
 
 export function DashboardPage() {
   const [stats, setStats] = useState<DashboardStats>(initialStats);
@@ -166,7 +157,7 @@ export function DashboardPage() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         {STAT_CARDS.map((card, index) => {
           const Icon = card.icon;
-          const value = stats[card.key as keyof DashboardStats] as number;
+          const value = stats.counts[card.key as keyof typeof stats.counts] ?? 0;
           return (
             <motion.div
               key={card.key}
@@ -265,7 +256,7 @@ export function DashboardPage() {
               </div>
             </CardHeader>
             <CardContent>
-              {stats.projectsByArea.length === 0 ? (
+              {(!stats.projectsByStatus || stats.projectsByStatus.length === 0) ? (
                 <div className="flex items-center justify-center h-64 text-gray-400">
                   No hay datos disponibles
                 </div>
@@ -273,25 +264,25 @@ export function DashboardPage() {
                 <ResponsiveContainer width="100%" height={300}>
                   <PieChart>
                     <Pie
-                      data={stats.projectsByArea}
+                      data={stats.projectsByStatus}
                       dataKey="count"
-                      nameKey="area"
+                      nameKey="status"
                       cx="50%"
                       cy="50%"
                       outerRadius={100}
-                      label={({ area, count }) => `${PROJECT_AREAS.find((a) => a.value === area)?.label ?? area}: ${count}`}
+                      label={({ status, count }) => `${status}: ${count}`}
                       labelLine
                     >
-                      {stats.projectsByArea.map((_entry, index) => (
+                      {stats.projectsByStatus.map((_entry, index) => (
                         <Cell key={`cell-${index}`} fill={AREA_COLORS[index % AREA_COLORS.length]} />
                       ))}
                     </Pie>
                     <Tooltip
                       formatter={(value: number, _name: string) => [value, 'Proyectos']}
-                      labelFormatter={(label) => PROJECT_AREAS.find((a) => a.value === label)?.label ?? label}
+                      labelFormatter={(label) => label}
                     />
                     <Legend
-                      formatter={(value) => PROJECT_AREAS.find((a) => a.value === value)?.label ?? value}
+                      formatter={(value) => value}
                     />
                   </PieChart>
                 </ResponsiveContainer>
@@ -321,23 +312,25 @@ export function DashboardPage() {
               </div>
             </CardHeader>
             <CardContent>
-              {stats.recentActivity.length === 0 ? (
+              {(!stats.recentReports || stats.recentReports.length === 0) ? (
                 <div className="flex items-center justify-center py-12 text-gray-400">
                   No hay actividad reciente
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {stats.recentActivity.slice(0, 8).map((activity) => {
-                    const Icon = ACTIVITY_ICONS[activity.type] ?? Activity;
+                  {stats.recentReports.slice(0, 8).map((report) => {
+                    const level = VIOLENCE_LEVELS.find((l) => l.value === report.level);
                     return (
-                      <div key={activity.id} className="flex items-start gap-3">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-violet-100 text-violet-600 shrink-0">
-                          <Icon className="h-4 w-4" />
+                      <div key={report.id} className="flex items-start gap-3">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-red-100 text-red-600 shrink-0">
+                          <Shield className="h-4 w-4" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm text-gray-900">{activity.description}</p>
+                          <p className="text-sm text-gray-900">
+                            Denuncia {level?.label ?? report.level} — {report.reportCode}
+                          </p>
                           <p className="text-xs text-gray-400">
-                            {new Date(activity.date).toLocaleDateString('es-PE', {
+                            {new Date(report.createdAt).toLocaleDateString('es-PE', {
                               day: 'numeric',
                               month: 'short',
                               hour: '2-digit',
