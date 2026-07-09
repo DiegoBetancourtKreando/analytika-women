@@ -94,4 +94,35 @@ export class DynamicFormsService {
       data,
     });
   }
+
+  async setupDefaults() {
+    const existing = await this.prisma.dynamicForm.findUnique({ where: { code: 'violence_report' } });
+    if (existing) return { message: 'Los formularios ya existen' };
+
+    const violenceForm = await this.prisma.dynamicForm.create({
+      data: {
+        code: 'violence_report',
+        name: 'Denuncia por Violencia de Género',
+        description: 'Formulario inteligente para reportar situaciones de violencia de género.',
+        icon: 'Shield',
+        isActive: true,
+        config: { steps: true },
+      },
+    });
+
+    await this.prisma.dynamicField.createMany({
+      data: [
+        { formId: violenceForm.id, key: 'is_anonymous', label: '¿Deseas permanecer anónima?', type: 'radio', order: 1, validation: { required: true }, options: [{ value: 'true', label: 'Sí, prefiero el anonimato' }, { value: 'false', label: 'No, identificarme' }], helpText: 'Puedes denunciar de forma anónima sin proporcionar tus datos personales.' },
+        { formId: violenceForm.id, key: 'full_name', label: 'Nombres y apellidos', type: 'text', placeholder: 'Ej: María García López', order: 2, validation: { required: true, minLength: 3 }, conditional: { field: 'is_anonymous', value: 'false' } },
+        { formId: violenceForm.id, key: 'email', label: 'Correo electrónico', type: 'email', placeholder: 'tucorreo@ejemplo.com', order: 3, validation: { required: true }, conditional: { field: 'is_anonymous', value: 'false' } },
+        { formId: violenceForm.id, key: 'phone', label: 'Teléfono de contacto', type: 'phone', placeholder: '+51 999 999 999', order: 4, conditional: { field: 'is_anonymous', value: 'false' } },
+        { formId: violenceForm.id, key: 'violence_types', label: '¿Qué tipo(s) de violencia estás sufriendo?', type: 'checkbox', order: 5, validation: { required: true }, options: [{ value: 'PSYCHOLOGICAL', label: 'Violencia Psicológica', severity: 2 }, { value: 'PHYSICAL', label: 'Violencia Física', severity: 4 }, { value: 'SEXUAL', label: 'Violencia Sexual', severity: 4 }, { value: 'ECONOMIC', label: 'Violencia Económica', severity: 2 }, { value: 'PATRIMONIAL', label: 'Violencia Patrimonial', severity: 1 }, { value: 'DIGITAL', label: 'Violencia Digital', severity: 2 }], helpText: 'Selecciona todas las opciones que apliquen.' },
+        { formId: violenceForm.id, key: 'description', label: 'Cuéntanos qué está pasando', type: 'textarea', placeholder: 'Describe tu situación...', order: 6, validation: { required: true, minLength: 20, maxLength: 2000 }, helpText: 'Incluye fechas, lugares y cualquier detalle relevante.' },
+        { formId: violenceForm.id, key: 'wants_referral', label: '¿Deseas ser direccionada a una profesional?', type: 'radio', order: 7, validation: { required: true }, options: [{ value: 'true', label: 'Sí, quiero ayuda profesional' }, { value: 'false', label: 'No por el momento' }], helpText: 'Podemos derivarte a una abogada, psicóloga o trabajadora social.' },
+        { formId: violenceForm.id, key: 'referral_specialty', label: '¿Qué tipo de profesional?', type: 'radio', order: 8, options: [{ value: 'LAWYER', label: 'Abogada' }, { value: 'PSYCHOLOGIST', label: 'Psicóloga' }, { value: 'SOCIAL_WORKER', label: 'Trabajadora Social' }], conditional: { field: 'wants_referral', value: 'true' } },
+      ],
+    });
+
+    return { message: 'Formularios creados exitosamente' };
+  }
 }

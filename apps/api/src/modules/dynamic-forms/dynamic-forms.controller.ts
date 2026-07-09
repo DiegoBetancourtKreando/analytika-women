@@ -63,4 +63,13 @@ export class DynamicFormsController {
   ) {
     return this.dynamicFormsService.updateField(fieldId, body);
   }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @Post('setup')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Crear formularios por defecto (violence_report, contact)' })
+  async setupDefaults() {
+    return this.dynamicFormsService.setupDefaults();
+  }
 }
