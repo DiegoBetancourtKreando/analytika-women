@@ -45,4 +45,4 @@ RUN npx prisma generate 2>&1
 
 EXPOSE 4000
 
-CMD node dist/main.js
+CMD npx prisma db push 2>&1; node dist/main.js
