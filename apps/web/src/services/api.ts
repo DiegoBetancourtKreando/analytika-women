@@ -49,7 +49,7 @@ async function refreshAccessToken(): Promise<boolean> {
     if (!response.ok) return false;
 
     const data = await response.json();
-    setTokens(data.data.accessToken, data.data.refreshToken);
+    setTokens(data.accessToken ?? data.data?.accessToken, data.refreshToken ?? data.data?.refreshToken);
     return true;
   } catch {
     return false;
@@ -109,7 +109,7 @@ export async function api<T>(
     );
   }
 
-  return json.data;
+  return json.data ?? json;
 }
 
 export function apiGet<T>(endpoint: string, params?: Record<string, string | number | undefined>) {
