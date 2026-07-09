@@ -17,6 +17,7 @@ import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { PaginationDto } from '../../common/dto/pagination.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { Public } from '../../common/decorators/public.decorator';
 
 @ApiTags('Projects')
 @ApiBearerAuth()
@@ -32,6 +33,7 @@ export class ProjectsController {
     return this.projectsService.create(dto);
   }
 
+  @Public()
   @Get()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Obtener todos los proyectos (paginado)' })
@@ -39,6 +41,7 @@ export class ProjectsController {
     return this.projectsService.findAll(dto);
   }
 
+  @Public()
   @Get(':id')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Obtener proyecto por ID' })

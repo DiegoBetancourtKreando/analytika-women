@@ -17,6 +17,7 @@ import { CreateEventDto } from './dto/create-event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
 import { PaginationDto } from '../../common/dto/pagination.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { Public } from '../../common/decorators/public.decorator';
 
 @ApiTags('Events')
 @ApiBearerAuth()
@@ -32,6 +33,7 @@ export class EventsController {
     return this.eventsService.create(dto);
   }
 
+  @Public()
   @Get()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Obtener todos los eventos (paginado)' })
@@ -39,6 +41,7 @@ export class EventsController {
     return this.eventsService.findAll(dto);
   }
 
+  @Public()
   @Get(':id')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Obtener evento por ID' })

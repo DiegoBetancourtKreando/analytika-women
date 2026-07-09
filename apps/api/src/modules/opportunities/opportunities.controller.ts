@@ -17,6 +17,7 @@ import { CreateOpportunityDto } from './dto/create-opportunity.dto';
 import { UpdateOpportunityDto } from './dto/update-opportunity.dto';
 import { PaginationDto } from '../../common/dto/pagination.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { Public } from '../../common/decorators/public.decorator';
 import { OpportunityType, OpportunityStatus } from '@prisma/client';
 
 @ApiTags('Opportunities')
@@ -33,6 +34,7 @@ export class OpportunitiesController {
     return this.opportunitiesService.create(dto);
   }
 
+  @Public()
   @Get()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Obtener todas las oportunidades (paginado)' })
@@ -46,6 +48,7 @@ export class OpportunitiesController {
     return this.opportunitiesService.findAll(dto, type, status);
   }
 
+  @Public()
   @Get(':id')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Obtener oportunidad por ID' })

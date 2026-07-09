@@ -17,6 +17,7 @@ import { CreateProfessionalDto } from './dto/create-professional.dto';
 import { UpdateProfessionalDto } from './dto/update-professional.dto';
 import { PaginationDto } from '../../common/dto/pagination.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { Public } from '../../common/decorators/public.decorator';
 
 @ApiTags('Professionals')
 @ApiBearerAuth()
@@ -32,6 +33,7 @@ export class ProfessionalsController {
     return this.professionalsService.create(dto);
   }
 
+  @Public()
   @Get()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Obtener todos los profesionales (paginado)' })
@@ -39,6 +41,7 @@ export class ProfessionalsController {
     return this.professionalsService.findAll(dto);
   }
 
+  @Public()
   @Get(':id')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Obtener profesional por ID' })

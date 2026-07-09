@@ -17,6 +17,7 @@ import { CreateOrganizationDto } from './dto/create-organization.dto';
 import { UpdateOrganizationDto } from './dto/update-organization.dto';
 import { PaginationDto } from '../../common/dto/pagination.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { Public } from '../../common/decorators/public.decorator';
 import { OrganizationType } from '@prisma/client';
 
 @ApiTags('Organizations')
@@ -33,6 +34,7 @@ export class OrganizationsController {
     return this.organizationsService.create(dto);
   }
 
+  @Public()
   @Get()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Obtener todas las organizaciones (paginado)' })
@@ -44,6 +46,7 @@ export class OrganizationsController {
     return this.organizationsService.findAll(dto, type);
   }
 
+  @Public()
   @Get(':id')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Obtener organización por ID' })
