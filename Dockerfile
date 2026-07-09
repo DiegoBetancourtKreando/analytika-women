@@ -26,7 +26,7 @@ RUN npm run build --workspace=packages/ui 2>&1
 
 RUN cd apps/web && npx vite build 2>&1
 
-RUN cd apps/api && npx nest build 2>&1
+RUN cd apps/api && npx prisma generate 2>&1 && npx nest build 2>&1
 
 FROM node:22-alpine AS runner
 WORKDIR /app
