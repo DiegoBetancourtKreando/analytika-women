@@ -1,9 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Button, Input, Textarea, Select, Checkbox, Badge, Progress } from '@analytika/ui';
-import { Shield, ChevronLeft, ChevronRight, Send, AlertTriangle, Info } from 'lucide-react';
+import { Button, Input, Textarea, Select, Badge, Progress } from '@analytika/ui';
+import { ChevronLeft, ChevronRight, Send, AlertTriangle, Info } from 'lucide-react';
 import { apiGet, apiPost } from '../../services/api';
-import { useToast } from '@analytika/ui';
 
 interface DynamicField {
   id: string;
@@ -33,23 +32,6 @@ interface DynamicFormProps {
   onSuccess?: () => void;
   className?: string;
 }
-
-const FALLBACK_FORMS: Record<string, { fields: DynamicField[]; config: { steps: boolean } }> = {
-  violence_report: {
-    config: { steps: true },
-    fields: [
-      { id: 'fb-1', key: 'is_anonymous', label: '¿Deseas permanecer anónima?', type: 'radio', order: 1, placeholder: null, helpText: 'Puedes denunciar de forma anónima sin proporcionar tus datos personales.', options: [{ value: 'true', label: 'Sí, prefiero el anonimato' }, { value: 'false', label: 'No, identificarme' }], validation: { required: true }, conditional: null },
-      { id: 'fb-2', key: 'full_name', label: 'Nombres y apellidos', type: 'text', order: 2, placeholder: 'Ej: María García López', helpText: null, options: null, validation: { required: true, minLength: 3 }, conditional: { field: 'is_anonymous', value: 'false' } },
-      { id: 'fb-3', key: 'email', label: 'Correo electrónico', type: 'email', order: 3, placeholder: 'tucorreo@ejemplo.com', helpText: null, options: null, validation: { required: true }, conditional: { field: 'is_anonymous', value: 'false' } },
-      { id: 'fb-4', key: 'phone', label: 'Teléfono de contacto', type: 'phone', order: 4, placeholder: '+51 999 999 999', helpText: null, options: null, validation: null, conditional: { field: 'is_anonymous', value: 'false' } },
-      { id: 'fb-5', key: 'violence_types', label: '¿Qué tipo(s) de violencia estás sufriendo?', type: 'checkbox', order: 5, placeholder: null, helpText: 'Selecciona todas las opciones que apliquen a tu situación.', options: [{ value: 'PSYCHOLOGICAL', label: 'Violencia Psicológica', severity: 2 }, { value: 'PHYSICAL', label: 'Violencia Física', severity: 4 }, { value: 'SEXUAL', label: 'Violencia Sexual', severity: 4 }, { value: 'ECONOMIC', label: 'Violencia Económica', severity: 2 }, { value: 'PATRIMONIAL', label: 'Violencia Patrimonial', severity: 1 }, { value: 'DIGITAL', label: 'Violencia Digital', severity: 2 }], validation: { required: true }, conditional: null },
-      { id: 'fb-6', key: 'description', label: 'Cuéntanos qué está pasando', type: 'textarea', order: 6, placeholder: 'Describe tu situación con el mayor detalle posible...', helpText: 'Describe la situación, incluyendo fechas, lugares y cualquier detalle relevante.', options: null, validation: { required: true, minLength: 20, maxLength: 2000 }, conditional: null },
-      { id: 'fb-7', key: 'has_evidence', label: '¿Tienes evidencias o documentos que respalden tu denuncia?', type: 'radio', order: 7, placeholder: null, helpText: null, options: [{ value: 'true', label: 'Sí, tengo evidencias' }, { value: 'false', label: 'No, no tengo evidencias' }], validation: { required: true }, conditional: null },
-      { id: 'fb-8', key: 'wants_referral', label: '¿Deseas ser direccionada a una profesional especializada?', type: 'radio', order: 8, placeholder: null, helpText: 'Podemos derivarte de forma gratuita y confidencial a una abogada, psicóloga o trabajadora social.', options: [{ value: 'true', label: 'Sí, quiero ayuda profesional' }, { value: 'false', label: 'No por el momento' }], validation: { required: true }, conditional: null },
-      { id: 'fb-9', key: 'referral_specialty', label: '¿Qué tipo de profesional necesitas?', type: 'radio', order: 9, placeholder: null, helpText: null, options: [{ value: 'LAWYER', label: 'Abogada', description: 'Asesoría legal y patrocinio judicial' }, { value: 'PSYCHOLOGIST', label: 'Psicóloga', description: 'Apoyo emocional y contención psicológica' }, { value: 'SOCIAL_WORKER', label: 'Trabajadora Social', description: 'Orientación en recursos sociales y protección' }], validation: null, conditional: { field: 'wants_referral', value: 'true' } },
-    ],
-  },
-};
 
 const FIELD_ICONS: Record<string, string> = {
   text: 'text',
@@ -106,7 +88,6 @@ export function DynamicForm({ formCode, onSuccess, className }: DynamicFormProps
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [currentStep, setCurrentStep] = useState(0);
   const [submitted, setSubmitted] = useState(false);
-  const { addToast } = useToast();
   const loadedRef = useRef(false);
 
   useEffect(() => {
@@ -118,10 +99,7 @@ export function DynamicForm({ formCode, onSuccess, className }: DynamicFormProps
         const data = await apiGet<DynamicFormConfig>(`/forms/${formCode}`);
         setFormConfig(data);
       } catch {
-        const fallback = FALLBACK_FORMS[formCode];
-        if (fallback) {
-          setFormConfig({ id: formCode, code: formCode, name: '', description: null, icon: null, config: fallback.config, fields: fallback.fields });
-        }
+        // Form not found in DB — show empty state
       } finally {
         setLoading(false);
       }
@@ -185,12 +163,9 @@ export function DynamicForm({ formCode, onSuccess, className }: DynamicFormProps
         },
       });
       setSubmitted(true);
-      addToast({ type: 'success', title: 'Formulario enviado', description: 'Hemos recibido tus datos correctamente.' });
       onSuccess?.();
     } catch {
-      // If the backend is unavailable, still show success (offline fallback)
-      setSubmitted(true);
-      addToast({ type: 'success', title: 'Formulario enviado', description: 'Hemos recibido tus datos correctamente.' });
+      // Submission failed
     } finally {
       setSubmitting(false);
     }
