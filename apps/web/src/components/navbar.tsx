@@ -8,7 +8,9 @@ import { useAuthStore } from '../stores/auth-store';
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
-  const { isAuthenticated, user } = useAuthStore();
+  const isInitializing = useAuthStore((s) => s.isInitializing);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const user = useAuthStore((s) => s.user);
 
   const publicModules = MODULES.filter((m) => m.isPublic);
 
@@ -22,82 +24,94 @@ export function Navbar() {
           <span className="text-lg font-semibold text-gray-900">Analytika Women</span>
         </Link>
 
-        <nav className="hidden items-center gap-1 md:flex">
-          {publicModules.map((module) => {
-            const isActive = location.pathname === module.path;
-            return (
-              <Link
-                key={module.id}
-                to={module.path}
-                className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                  isActive
-                    ? 'bg-violet-50 text-violet-700'
-                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                }`}
-              >
-                {module.label}
-              </Link>
-            );
-          })}
-        </nav>
+        {isInitializing ? (
+          <div className="flex items-center gap-3">
+            <div className="h-5 w-5 animate-spin rounded-full border-2 border-violet-600 border-t-transparent" />
+          </div>
+        ) : isAuthenticated && user ? (
+          <>
+            <nav className="hidden items-center gap-1 md:flex">
+              {publicModules.map((module) => {
+                const isActive = location.pathname === module.path;
+                return (
+                  <Link
+                    key={module.id}
+                    to={module.path}
+                    className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                      isActive
+                        ? 'bg-violet-50 text-violet-700'
+                        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                    }`}
+                  >
+                    {module.label}
+                  </Link>
+                );
+              })}
+            </nav>
 
-        <div className="hidden items-center gap-3 md:flex">
-          {isAuthenticated && user ? (
-            <Link to={ROUTES.DASHBOARD}>
-              <Button variant="ghost" size="sm">
-                {user.firstName} {user.lastName}
-              </Button>
-            </Link>
-          ) : (
-            <>
+            <div className="hidden items-center gap-3 md:flex">
+              <Link to={ROUTES.DASHBOARD}>
+                <Button variant="ghost" size="sm">
+                  {user.firstName} {user.lastName}
+                </Button>
+              </Link>
+            </div>
+
+            <button
+              type="button"
+              className="inline-flex items-center justify-center rounded-lg p-2 text-gray-600 hover:bg-gray-100 md:hidden"
+              onClick={() => setIsOpen(!isOpen)}
+            >
+              {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            </button>
+          </>
+        ) : (
+          <>
+            <div className="hidden items-center gap-3 md:flex">
               <Link to="/login">
                 <Button variant="ghost" size="sm">Iniciar Sesión</Button>
               </Link>
               <Link to="/registro">
                 <Button size="sm">Registrarse</Button>
               </Link>
-            </>
-          )}
-        </div>
-
-        <button
-          type="button"
-          className="inline-flex items-center justify-center rounded-lg p-2 text-gray-600 hover:bg-gray-100 md:hidden"
-          onClick={() => setIsOpen(!isOpen)}
-        >
-          {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-        </button>
+            </div>
+            <button
+              type="button"
+              className="inline-flex items-center justify-center rounded-lg p-2 text-gray-600 hover:bg-gray-100 md:hidden"
+              onClick={() => setIsOpen(!isOpen)}
+            >
+              {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            </button>
+          </>
+        )}
       </div>
 
-      {isOpen && (
+      {isOpen && !isInitializing && (
         <div className="border-t border-gray-200 bg-white md:hidden">
           <div className="space-y-1 px-4 py-4">
-            {publicModules.map((module) => (
-              <Link
-                key={module.id}
-                to={module.path}
-                className="block rounded-lg px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100"
-                onClick={() => setIsOpen(false)}
-              >
-                {module.label}
-              </Link>
-            ))}
-            <div className="border-t border-gray-200 pt-4">
-              {isAuthenticated && user ? (
-                <Link to={ROUTES.DASHBOARD} className="block w-full" onClick={() => setIsOpen(false)}>
-                  <Button className="w-full">Ir al Dashboard</Button>
+            {isAuthenticated && user ? (
+              <>
+                {publicModules.map((module) => (
+                  <Link key={module.id} to={module.path} className="block rounded-lg px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100" onClick={() => setIsOpen(false)}>
+                    {module.label}
+                  </Link>
+                ))}
+                <div className="border-t border-gray-200 pt-4">
+                  <Link to={ROUTES.DASHBOARD} className="block w-full" onClick={() => setIsOpen(false)}>
+                    <Button className="w-full">Ir al Dashboard</Button>
+                  </Link>
+                </div>
+              </>
+            ) : (
+              <div className="space-y-2">
+                <Link to="/login" className="block w-full" onClick={() => setIsOpen(false)}>
+                  <Button variant="outline" className="w-full">Iniciar Sesión</Button>
                 </Link>
-              ) : (
-                <>
-                  <Link to="/login" className="block w-full mb-2" onClick={() => setIsOpen(false)}>
-                    <Button variant="outline" className="w-full">Iniciar Sesión</Button>
-                  </Link>
-                  <Link to="/registro" className="block w-full" onClick={() => setIsOpen(false)}>
-                    <Button className="w-full">Registrarse</Button>
-                  </Link>
-                </>
-              )}
-            </div>
+                <Link to="/registro" className="block w-full" onClick={() => setIsOpen(false)}>
+                  <Button className="w-full">Registrarse</Button>
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       )}
