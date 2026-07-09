@@ -248,7 +248,7 @@ export function AdminFormsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Formularios Dinámicos</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Formulario Denuncias</h1>
           <p className="text-sm text-gray-500">Crea categorías y preguntas</p>
         </div>
         <div className="flex items-center gap-3">
