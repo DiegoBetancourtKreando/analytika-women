@@ -1,11 +1,13 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe, VersioningType } from '@nestjs/common';
+import { ValidationPipe, VersioningType, Logger } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import { existsSync } from 'fs';
 import { join } from 'path';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
+  const logger = new Logger('Bootstrap');
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   app.setGlobalPrefix('api');
@@ -19,15 +21,19 @@ async function bootstrap() {
   });
 
   const frontendPath = join(__dirname, '..', '..', 'web', 'dist');
-  app.useStaticAssets(frontendPath, { index: false });
-
-  app.use((req: any, res: any, next: any) => {
-    if (!req.path.startsWith('/api')) {
-      res.sendFile(join(frontendPath, 'index.html'));
-    } else {
-      next();
-    }
-  });
+  if (existsSync(frontendPath)) {
+    app.useStaticAssets(frontendPath, { index: false });
+    app.use((req: any, res: any, next: any) => {
+      if (!req.path.startsWith('/api')) {
+        res.sendFile(join(frontendPath, 'index.html'));
+      } else {
+        next();
+      }
+    });
+    logger.log(`Serving frontend from ${frontendPath}`);
+  } else {
+    logger.warn(`Frontend path not found: ${frontendPath}. API only mode.`);
+  }
 
   app.useGlobalPipes(
     new ValidationPipe({
