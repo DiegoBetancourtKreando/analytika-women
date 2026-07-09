@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, ChevronDown } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import { Button } from '@analytika/ui';
-import { MODULES } from '../constants';
+import { MODULES, ROUTES } from '../constants';
+import { useAuthStore } from '../stores/auth-store';
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
+  const { isAuthenticated, user } = useAuthStore();
 
   const publicModules = MODULES.filter((m) => m.isPublic);
 
@@ -40,12 +42,22 @@ export function Navbar() {
         </nav>
 
         <div className="hidden items-center gap-3 md:flex">
-          <Link to="/login">
-            <Button variant="ghost" size="sm">Iniciar Sesión</Button>
-          </Link>
-          <Link to="/registro">
-            <Button size="sm">Registrarse</Button>
-          </Link>
+          {isAuthenticated && user ? (
+            <Link to={ROUTES.DASHBOARD}>
+              <Button variant="ghost" size="sm">
+                {user.firstName} {user.lastName}
+              </Button>
+            </Link>
+          ) : (
+            <>
+              <Link to="/login">
+                <Button variant="ghost" size="sm">Iniciar Sesión</Button>
+              </Link>
+              <Link to="/registro">
+                <Button size="sm">Registrarse</Button>
+              </Link>
+            </>
+          )}
         </div>
 
         <button
@@ -71,12 +83,20 @@ export function Navbar() {
               </Link>
             ))}
             <div className="border-t border-gray-200 pt-4">
-              <Link to="/login" className="block w-full mb-2">
-                <Button variant="outline" className="w-full">Iniciar Sesión</Button>
-              </Link>
-              <Link to="/registro" className="block w-full">
-                <Button className="w-full">Registrarse</Button>
-              </Link>
+              {isAuthenticated && user ? (
+                <Link to={ROUTES.DASHBOARD} className="block w-full" onClick={() => setIsOpen(false)}>
+                  <Button className="w-full">Ir al Dashboard</Button>
+                </Link>
+              ) : (
+                <>
+                  <Link to="/login" className="block w-full mb-2" onClick={() => setIsOpen(false)}>
+                    <Button variant="outline" className="w-full">Iniciar Sesión</Button>
+                  </Link>
+                  <Link to="/registro" className="block w-full" onClick={() => setIsOpen(false)}>
+                    <Button className="w-full">Registrarse</Button>
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>
