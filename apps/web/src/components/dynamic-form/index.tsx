@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Button, Input, Badge, Progress } from '@analytika/ui';
-import { ChevronLeft, ChevronRight, Send, User, ShieldOff } from 'lucide-react';
+import { Button, Input } from '@analytika/ui';
+import { Send } from 'lucide-react';
 import { apiGet, apiPost } from '../../services/api';
 
 interface DynamicField {
@@ -48,33 +48,19 @@ export function DynamicForm({ formCode, onSuccess, className }: DynamicFormProps
     return () => { cancelled = true; };
   }, [formCode]);
 
-  const visibleFields = (formConfig?.fields ?? []).filter((f) => {
-    if (!f.isActive) return false;
-    return true;
-  });
-
-  const [currentStep, setCurrentStep] = useState(0);
-  const steps = splitSteps(visibleFields);
+  const visibleFields = (formConfig?.fields ?? []).filter((f) => f.isActive);
 
   function handleChange(key: string, value: string | string[]) {
     setFormData((prev) => ({ ...prev, [key]: value }));
   }
 
-  function canGoNext(stepIndex: number): boolean {
-    const fields = steps[stepIndex] ?? [];
-    return fields.every((f) => {
-      const val = formData[f.label];
-      if (!val || (Array.isArray(val) && val.length === 0)) return false;
-      return true;
-    });
-  }
-
   async function handleSubmit() {
-    if (!canGoNext(currentStep)) return;
-    if (currentStep < steps.length - 1) {
-      setCurrentStep((s) => s + 1);
-      return;
-    }
+    const missing = visibleFields.some((f) => {
+      const val = formData[f.label];
+      return !val || (Array.isArray(val) && val.length === 0);
+    });
+    if (missing) return;
+
     setSubmitting(true);
     try {
       await apiPost(`/forms/${formCode}/submit`, { data: formData });
@@ -111,53 +97,21 @@ export function DynamicForm({ formCode, onSuccess, className }: DynamicFormProps
     );
   }
 
-  const currentFields = steps[currentStep] ?? [];
-  const totalSteps = steps.length;
-
   return (
     <div className={className}>
-      {totalSteps > 1 && (
-        <div className="mb-6">
-          <div className="flex items-center justify-between text-sm text-gray-500">
-            <span>Paso {currentStep + 1} de {totalSteps}</span>
-            <span>{Math.round(((currentStep + 1) / totalSteps) * 100)}%</span>
-          </div>
-          <Progress value={((currentStep + 1) / totalSteps) * 100} className="mt-2" />
-        </div>
-      )}
-
-      <motion.div key={currentStep} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
-        {currentFields.map((field) => (
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+        {visibleFields.map((field) => (
           <FormField key={field.id} field={field} value={formData[field.label]} onChange={(val) => handleChange(field.label, val)} />
         ))}
       </motion.div>
 
-      <div className="mt-8 flex items-center justify-between gap-4">
-        {currentStep > 0 ? (
-          <Button variant="outline" onClick={() => setCurrentStep((s) => s - 1)}>
-            <ChevronLeft className="mr-2 h-4 w-4" /> Anterior
-          </Button>
-        ) : <div />}
-        <Button onClick={handleSubmit} isLoading={submitting} disabled={!canGoNext(currentStep)}>
-          {currentStep < totalSteps - 1 ? <>Siguiente <ChevronRight className="ml-2 h-4 w-4" /></> : <><Send className="mr-2 h-4 w-4" /> Enviar</>}
+      <div className="mt-8">
+        <Button onClick={handleSubmit} isLoading={submitting} className="w-full">
+          <Send className="mr-2 h-4 w-4" /> Enviar
         </Button>
       </div>
     </div>
   );
-}
-
-function splitSteps(fields: DynamicField[]): DynamicField[][] {
-  const steps: DynamicField[][] = [];
-  let current: DynamicField[] = [];
-  for (const f of fields) {
-    if (f.type === 'checkbox' && current.length > 0) {
-      steps.push(current);
-      current = [];
-    }
-    current.push(f);
-  }
-  if (current.length > 0) steps.push(current);
-  return steps;
 }
 
 function FormField({ field, value, onChange }: { field: DynamicField; value: string | string[] | undefined; onChange: (val: string | string[]) => void }) {
