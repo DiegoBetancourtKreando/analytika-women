@@ -1,0 +1,780 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["relationJoins"]
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  MANAGER
+  SOCIA
+  CONSULTANT
+  CLIENT
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  BLOCKED
+  PENDING_VERIFICATION
+}
+
+enum ProjectArea {
+  SOCIAL
+  TECHNOLOGY
+  ENVIRONMENTAL
+  ECONOMIC
+  POLITICAL
+}
+
+enum ProjectStatus {
+  PLANNING
+  IN_PROGRESS
+  COMPLETED
+  ON_HOLD
+  CANCELLED
+}
+
+enum CourseModality {
+  VIRTUAL
+  IN_PERSON
+  HYBRID
+}
+
+enum CourseStatus {
+  DRAFT
+  PUBLISHED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum EventType {
+  COURSE
+  WORKSHOP
+  CONFERENCE
+  SEMINAR
+  SOCIAL
+  COMMUNITY
+  OTHER
+}
+
+enum EventModality {
+  VIRTUAL
+  IN_PERSON
+  HYBRID
+}
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum OrganizationType {
+  ALLY
+  CLIENT
+  GOVERNMENT
+  NGO
+  ACADEMIC
+  OTHER
+}
+
+enum ProfessionalSpecialty {
+  LAWYER
+  PSYCHOLOGIST
+  SOCIAL_WORKER
+  DATA_SCIENCE
+  TECHNOLOGY
+  RESEARCH
+  CONSULTING
+  EDUCATION
+  OTHER
+}
+
+enum ClientType {
+  INDIVIDUAL
+  COMPANY
+  INSTITUTION
+  GOVERNMENT
+  NGO
+}
+
+enum ViolenceLevel {
+  LOW
+  MODERATE
+  HIGH
+  CRITICAL
+}
+
+enum ViolenceType {
+  PHYSICAL
+  PSYCHOLOGICAL
+  SEXUAL
+  ECONOMIC
+  PATRIMONIAL
+  DIGITAL
+}
+
+enum ReportStatus {
+  RECEIVED
+  IN_REVIEW
+  DERIVED
+  CLOSED
+}
+
+enum OpportunityType {
+  SCHOLARSHIP
+  JOB
+  VOLUNTEER
+  INTERNSHIP
+  CALL
+  TRAINING
+}
+
+enum OpportunityModality {
+  VIRTUAL
+  IN_PERSON
+  HYBRID
+}
+
+enum OpportunityStatus {
+  OPEN
+  CLOSED
+  IN_PROGRESS
+}
+
+enum NotificationType {
+  EMAIL
+  WHATSAPP
+  IN_APP
+}
+
+enum NotificationChannel {
+  SYSTEM
+  REPORT_UPDATE
+  COURSE_ENROLLMENT
+  EVENT_REMINDER
+  OPPORTUNITY
+  CERTIFICATE
+  MESSAGE
+}
+
+model User {
+  id             String     @id @default(cuid())
+  email          String     @unique @db.VarChar(255)
+  passwordHash   String     @db.VarChar(255)
+  firstName      String     @db.VarChar(100)
+  lastName       String     @db.VarChar(100)
+  role           UserRole   @default(CLIENT)
+  status         UserStatus @default(PENDING_VERIFICATION)
+  avatar         String?    @db.VarChar(500)
+  phone          String?    @db.VarChar(20)
+  emailVerified  Boolean    @default(false)
+  refreshToken   String?    @db.Text
+  lastLoginAt    DateTime?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  deletedAt      DateTime?
+
+  professional    Professional?
+  client          Client?
+  roleAssignments UserRoleAssignment[]
+  organizedEvents Event[]            @relation("EventOrganizer")
+  assignedReports ViolenceReport[]   @relation("ReportAssignee")
+  notifications   Notification[]
+  auditLogs       AuditLog[]
+
+  @@index([email])
+  @@index([role])
+  @@index([status])
+  @@map("users")
+}
+
+model Role {
+  id          String          @id @default(cuid())
+  name        String          @unique @db.VarChar(50)
+  description String?         @db.VarChar(255)
+  isSystem    Boolean         @default(false)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  permissions RolePermission[]
+  users       UserRoleAssignment[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id          String          @id @default(cuid())
+  code        String          @unique @db.VarChar(100)
+  name        String          @db.VarChar(255)
+  description String?         @db.Text
+  module      String          @db.VarChar(50)
+  createdAt   DateTime        @default(now())
+
+  roles       RolePermission[]
+
+  @@index([code])
+  @@index([module])
+  @@map("permissions")
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+  createdAt    DateTime @default(now())
+
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+model UserRoleAssignment {
+  userId    String
+  roleId    String
+  createdAt DateTime @default(now())
+
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+  @@map("user_role_assignments")
+}
+
+model Organization {
+  id          String           @id @default(cuid())
+  name        String           @db.VarChar(255)
+  description String?          @db.Text
+  type        OrganizationType @default(ALLY)
+  website     String?          @db.VarChar(500)
+  email       String?          @db.VarChar(255)
+  phone       String?          @db.VarChar(20)
+  address     String?          @db.Text
+  logo        String?          @db.VarChar(500)
+  isActive    Boolean          @default(true)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  deletedAt   DateTime?
+
+  projects          Project[]
+  events            Event[]
+  opportunities     Opportunity[]
+  contactSubmissions ContactSubmission[]
+
+  @@index([type])
+  @@index([isActive])
+  @@map("organizations")
+}
+
+model Professional {
+  id           String               @id @default(cuid())
+  firstName    String               @db.VarChar(100)
+  lastName     String               @db.VarChar(100)
+  email        String               @unique @db.VarChar(255)
+  phone        String?              @db.VarChar(20)
+  specialty    ProfessionalSpecialty
+  bio          String?              @db.Text
+  experience   Int                  @default(0)
+  isActive     Boolean              @default(true)
+  isTeamMember Boolean              @default(false)
+  photo        String?              @db.VarChar(500)
+  userId       String?              @unique
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+  deletedAt    DateTime?
+
+  user           User?             @relation(fields: [userId], references: [id])
+  certifications Certification[]
+  publications   Publication[]
+  assignedReports ViolenceReport[]  @relation("AssignedProfessional")
+  courses        CourseInstructor[]
+  coursesTaught  Course[]
+
+  @@index([specialty])
+  @@index([isActive])
+  @@index([isTeamMember])
+  @@map("professionals")
+}
+
+model Certification {
+  id              String       @id @default(cuid())
+  professionalId  String
+  name            String       @db.VarChar(255)
+  issuer          String       @db.VarChar(255)
+  year            Int
+  expirationYear  Int?
+  fileUrl         String?      @db.VarChar(500)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  professional    Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+
+  @@index([professionalId])
+  @@map("certifications")
+}
+
+model Publication {
+  id             String       @id @default(cuid())
+  professionalId String
+  title          String       @db.VarChar(500)
+  publisher      String       @db.VarChar(255)
+  year           Int
+  url            String?      @db.VarChar(500)
+  doi            String?      @db.VarChar(255)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  professional   Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+
+  @@index([professionalId])
+  @@map("publications")
+}
+
+model Client {
+  id               String     @id @default(cuid())
+  type             ClientType @default(INDIVIDUAL)
+  name             String     @db.VarChar(255)
+  email            String     @unique @db.VarChar(255)
+  phone            String?    @db.VarChar(20)
+  organizationName String?    @db.VarChar(255)
+  ruc              String?    @db.VarChar(11)
+  address          String?    @db.Text
+  contactPerson    String?    @db.VarChar(255)
+  isActive         Boolean    @default(true)
+  notes            String?    @db.Text
+  userId           String?    @unique
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+  deletedAt        DateTime?
+
+  user    User?  @relation(fields: [userId], references: [id])
+  projects Project[]
+
+  @@index([email])
+  @@index([type])
+  @@index([isActive])
+  @@map("clients")
+}
+
+model Project {
+  id             String        @id @default(cuid())
+  title          String        @db.VarChar(255)
+  description    String        @db.Text
+  objectives     Json
+  area           ProjectArea
+  status         ProjectStatus @default(PLANNING)
+  startDate      DateTime
+  endDate        DateTime?
+  clientName     String?       @db.VarChar(255)
+  organizationId String?
+  clientId       String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  deletedAt      DateTime?
+
+  organization  Organization?   @relation(fields: [organizationId], references: [id])
+  client        Client?         @relation(fields: [clientId], references: [id])
+  evidences     ProjectEvidence[]
+  indicators    ProjectIndicator[]
+
+  @@index([area])
+  @@index([status])
+  @@index([organizationId])
+  @@map("projects")
+}
+
+model ProjectEvidence {
+  id        String   @id @default(cuid())
+  projectId String
+  title     String   @db.VarChar(255)
+  fileUrl   String   @db.VarChar(500)
+  type      String   @db.VarChar(50)
+  uploadedAt DateTime @default(now())
+  createdAt DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@map("project_evidences")
+}
+
+model ProjectIndicator {
+  id           String   @id @default(cuid())
+  projectId    String
+  name         String   @db.VarChar(255)
+  description  String?  @db.Text
+  targetValue  Float
+  currentValue Float    @default(0)
+  unit         String   @db.VarChar(50)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@map("project_indicators")
+}
+
+model Course {
+  id              String       @id @default(cuid())
+  title           String       @db.VarChar(255)
+  description     String       @db.Text
+  modality        CourseModality
+  status          CourseStatus @default(DRAFT)
+  duration        Int
+  durationUnit    String       @db.VarChar(10)
+  price           Decimal?     @db.Decimal(10, 2)
+  capacity        Int
+  enrolledCount   Int          @default(0)
+  startDate       DateTime
+  endDate         DateTime?
+  syllabus        Json
+  instructorId    String?
+  hasCertification Boolean    @default(false)
+  isVisible       Boolean     @default(false)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  deletedAt       DateTime?
+
+  instructor    Professional?  @relation(fields: [instructorId], references: [id])
+  enrollments   CourseEnrollment[]
+  certificates  Certificate[]
+  instructors   CourseInstructor[]
+
+  @@index([status])
+  @@index([modality])
+  @@index([isVisible])
+  @@map("courses")
+}
+
+model CourseEnrollment {
+  id        String   @id @default(cuid())
+  courseId  String
+  userId    String?
+  email     String   @db.VarChar(255)
+  fullName  String   @db.VarChar(255)
+  phone     String?  @db.VarChar(20)
+  status    String   @default("ENROLLED")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@index([courseId])
+  @@index([email])
+  @@map("course_enrollments")
+}
+
+model CourseInstructor {
+  courseId       String
+  professionalId String
+  createdAt      DateTime @default(now())
+
+  course       Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  professional Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+
+  @@id([courseId, professionalId])
+  @@map("course_instructors")
+}
+
+model ViolenceReport {
+  id                  String        @id @default(cuid())
+  reportCode          String        @unique @db.VarChar(20)
+  reporterName        String?       @db.VarChar(255)
+  reporterEmail       String?       @db.VarChar(255)
+  reporterPhone       String?       @db.VarChar(20)
+  isAnonymous         Boolean       @default(false)
+  violenceType        Json
+  description         String        @db.Text
+  level               ViolenceLevel
+  status              ReportStatus  @default(RECEIVED)
+  wantsReferral       Boolean       @default(false)
+  referralSpecialty   String?       @db.VarChar(50)
+  evidence            Json
+  aiClassification    String?       @db.Text
+  aiRiskScore         Float?
+  aiProcessedAt       DateTime?
+  assignedProfessionalId String?
+  assignedById        String?
+  resolutionNotes     String?       @db.Text
+  resolvedAt          DateTime?
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+  deletedAt           DateTime?
+
+  assignedProfessional Professional? @relation("AssignedProfessional", fields: [assignedProfessionalId], references: [id])
+  assignedBy          User?         @relation("ReportAssignee", fields: [assignedById], references: [id])
+
+  @@index([reportCode])
+  @@index([level])
+  @@index([status])
+  @@index([createdAt])
+  @@map("violence_reports")
+}
+
+model Opportunity {
+  id                String            @id @default(cuid())
+  title             String            @db.VarChar(255)
+  description       String            @db.Text
+  type              OpportunityType
+  modality          OpportunityModality?
+  status            OpportunityStatus  @default(OPEN)
+  applicationDeadline DateTime?
+  requirements      Json
+  benefits          Json?
+  contactEmail      String            @db.VarChar(255)
+  organizationId    String?
+  isActive          Boolean           @default(true)
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  deletedAt         DateTime?
+
+  organization Organization? @relation(fields: [organizationId], references: [id])
+
+  @@index([type])
+  @@index([status])
+  @@index([isActive])
+  @@map("opportunities")
+}
+
+model Event {
+  id              String       @id @default(cuid())
+  title           String       @db.VarChar(255)
+  description     String       @db.Text
+  type            EventType
+  modality        EventModality
+  status          EventStatus  @default(DRAFT)
+  startDate       DateTime
+  endDate         DateTime
+  location        String?      @db.VarChar(500)
+  virtualLink     String?      @db.VarChar(500)
+  capacity        Int
+  registeredCount Int          @default(0)
+  organizerId     String?
+  organizationId  String?
+  isPublic        Boolean      @default(true)
+  tags            Json
+  isVisible       Boolean      @default(true)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  deletedAt       DateTime?
+
+  organizer     User?         @relation("EventOrganizer", fields: [organizerId], references: [id])
+  organization  Organization? @relation(fields: [organizationId], references: [id])
+  registrations EventRegistration[]
+  certificates  Certificate[]
+
+  @@index([type])
+  @@index([status])
+  @@index([startDate])
+  @@map("events")
+}
+
+model EventRegistration {
+  id        String   @id @default(cuid())
+  eventId   String
+  email     String   @db.VarChar(255)
+  fullName  String   @db.VarChar(255)
+  phone     String?  @db.VarChar(20)
+  userId    String?
+  createdAt DateTime @default(now())
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([eventId])
+  @@index([email])
+  @@map("event_registrations")
+}
+
+model Certificate {
+  id            String   @id @default(cuid())
+  code          String   @unique @db.VarChar(50)
+  title         String   @db.VarChar(255)
+  recipientName String   @db.VarChar(255)
+  recipientEmail String  @db.VarChar(255)
+  courseId      String?
+  eventId       String?
+  issueDate     DateTime
+  expiryDate    DateTime?
+  qrCode        String   @db.VarChar(500)
+  isValid       Boolean  @default(true)
+  metadata      Json
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  course Course? @relation(fields: [courseId], references: [id])
+  event  Event?  @relation(fields: [eventId], references: [id])
+
+  @@index([code])
+  @@index([recipientEmail])
+  @@index([isValid])
+  @@map("certificates")
+}
+
+model ContactSubmission {
+  id             String       @id @default(cuid())
+  name           String       @db.VarChar(255)
+  email          String       @db.VarChar(255)
+  phone          String?      @db.VarChar(20)
+  subject        String       @db.VarChar(255)
+  message        String       @db.Text
+  organizationId String?
+  isRead         Boolean      @default(false)
+  aiProcessed    Boolean      @default(false)
+  aiSummary      String?      @db.Text
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  organization Organization? @relation(fields: [organizationId], references: [id])
+
+  @@index([email])
+  @@index([isRead])
+  @@map("contact_submissions")
+}
+
+model Notification {
+  id        String             @id @default(cuid())
+  userId    String
+  type      NotificationType  @default(IN_APP)
+  channel   NotificationChannel
+  title     String            @db.VarChar(255)
+  message   String            @db.Text
+  data      Json?
+  isRead    Boolean           @default(false)
+  readAt    DateTime?
+  createdAt DateTime          @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  action     String   @db.VarChar(100)
+  entity     String   @db.VarChar(100)
+  entityId   String?  @db.VarChar(100)
+  oldValue   Json?
+  newValue   Json?
+  ipAddress  String?  @db.VarChar(45)
+  userAgent  String?  @db.Text
+  createdAt  DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([action])
+  @@index([entity])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+model FeatureFlag {
+  id          String   @id @default(cuid())
+  code        String   @unique @db.VarChar(100)
+  name        String   @db.VarChar(255)
+  description String?  @db.Text
+  isEnabled   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([code])
+  @@map("feature_flags")
+}
+
+model SystemSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique @db.VarChar(100)
+  value     Json
+  category  String   @db.VarChar(50)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([key])
+  @@index([category])
+  @@map("system_settings")
+}
+
+model AIMessage {
+  id          String   @id @default(cuid())
+  userId      String?
+  sessionId   String   @db.VarChar(100)
+  role        String   @db.VarChar(20)
+  content     String   @db.Text
+  metadata    Json?
+  tokensUsed  Int?
+  model       String?  @db.VarChar(50)
+  createdAt   DateTime @default(now())
+
+  @@index([sessionId])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("ai_messages")
+}
+
+model DynamicForm {
+  id          String          @id @default(cuid())
+  code        String          @unique @db.VarChar(50)
+  name        String          @db.VarChar(255)
+  description String?         @db.Text
+  icon        String?         @db.VarChar(50)
+  isActive    Boolean         @default(true)
+  config      Json?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  fields      DynamicField[]
+  submissions DynamicSubmission[]
+
+  @@index([code])
+  @@map("dynamic_forms")
+}
+
+model DynamicField {
+  id          String       @id @default(cuid())
+  formId      String
+  key         String       @db.VarChar(100)
+  label       String       @db.VarChar(255)
+  type        String       @db.VarChar(50)
+  placeholder String?      @db.VarChar(255)
+  helpText    String?      @db.Text
+  options     Json?
+  validation  Json?
+  conditional Json?
+  order       Int          @default(0)
+  isActive    Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  form DynamicForm @relation(fields: [formId], references: [id], onDelete: Cascade)
+
+  @@index([formId])
+  @@index([formId, order])
+  @@map("dynamic_fields")
+}
+
+model DynamicSubmission {
+  id        String   @id @default(cuid())
+  formId    String
+  data      Json
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  form DynamicForm @relation(fields: [formId], references: [id], onDelete: Cascade)
+
+  @@index([formId])
+  @@index([createdAt])
+  @@map("dynamic_submissions")
+}

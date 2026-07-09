@@ -1,0 +1,179 @@
+PROPUESTA TÉCNICA PARA EL DESARROLLO DE LA PLATAFORMA WEB “ANALYTIKA WOMEN”
+Plataforma Inteligente de Gestión, Formación, Consultoría y Responsabilidad Social
+1. RESUMEN EJECUTIVO
+La presente propuesta tiene como objetivo desarrollar una plataforma web inteligente, modular y escalable para Analytika Women, orientada a integrar servicios institucionales, proyectos, formación continua, consultorías, análisis de datos e inteligencia artificial, responsabilidad social enfocada en promover los derechos de las mujeres.
+La plataforma permitirá posicionar a Analytika Women como una organización innovadora liderada por mujeres en áreas STEM, tecnología y análisis estratégico, fortaleciendo además la gestión institucional, la interacción con clientes y organizaciones aliadas, así como la generación de evidencia basada en datos.
+El sistema estará diseñado bajo principios de:
+•	Escalabilidad 
+•	Seguridad 
+•	Accesibilidad 
+•	Inteligencia de datos 
+•	Experiencia de usuario inclusiva 
+•	Automatización institucional 
+2. OBJETIVOS DE LA PLATAFORMA
+Objetivo General
+Diseñar e implementar una plataforma web moderna e inteligente que permita gestionar de manera integral los servicios, proyectos, alianzas, formación, procesos estratégicos y la responsabilidad social de Analytika Women.
+3. ESTRUCTURA GENERAL DE MÓDULOS
+MÓDULO 1 — INICIO 
+Objetivo
+Presentar institucionalmente a Analytika Women.
+Funcionalidades
+Presentación institucional
+•	Quiénes somos 
+•	Historia 
+•	Misión 
+•	Visión 
+•	Valores 
+•	Ejes estratégicos 
+Áreas de trabajo
+•	Tecnología 
+•	Ciencia de datos 
+•	Investigación 
+•	Formación 
+•	Consultoría 
+•	Responsabilidad social 
+Contacto
+•	Formulario inteligente 
+•	Integración WhatsApp 
+MÓDULO 2 — EQUIPO DE ANALYTIKA WOMEN
+Objetivo
+Visibilizar el equipo profesional.
+Funcionalidades
+•	Perfil de la gerente 
+•	Perfil del equipo 
+•	Experiencia profesional 
+•	Especialidades STEM 
+•	Certificaciones 
+•	Publicaciones 
+MÓDULO 3 — PROYECTOS DESARROLLADOS
+Objetivo
+Gestionar y visualizar proyectos.
+Funcionalidades
+Clasificación por áreas
+•	Sociales 
+•	Tecnológicos 
+•	Ambientales 
+•	Económicos 
+•	Políticos 
+Gestión de proyectos
+•	Descripción 
+•	Objetivos 
+•	Estado 
+•	Cronograma 
+•	Evidencias 
+•	Indicadores 
+MÓDULO 4 — FORMACIÓN CONTINUA Y EVENTOS
+Estado inicial
+Oculto hasta habilitación administrativa.
+Objetivo
+Gestionar procesos de capacitación especializada.
+Funcionalidades
+Formación
+•	Cursos virtuales 
+•	Cursos presenciales 
+•	Cursos híbridos 
+Certificación
+•	Certificados QR 
+•	Validación digital 
+MÓDULO 5 — CONSULTORES Y ORGANIZACIONES ALIADAS
+Objetivo
+Crear una red de especialistas y organizaciones aliadas.
+Submódulo: Consultores externos
+Mostrar a los consultores externos 
+Registro profesional de quienes deseen ser parte
+Submódulo: Organizaciones aliadas
+Mostrar a las organizaciones aliadas
+Registro profesional de quienes deseen ser parte
+MÓDULO 6 — CLIENTES
+Estado inicial
+Oculto hasta habilitación administrativa.
+Objetivo
+Administrar clientes institucionales.
+MÓDULO 7 — RESPONSABILIDAD SOCIAL
+MÓDULO ESTRATÉGICO Y SOCIAL
+Objetivo
+Desarrollar acciones de apoyo social y atención comunitaria.
+SUBMÓDULO 7.1 — DENUNCIA POR VIOLENCIA DE GÉNERO
+Objetivo
+Brindar orientación y acompañamiento inicial.
+Funcionalidades
+Formulario inteligente
+•	Preguntas guiadas 
+•	Registro básico 
+•	Adjuntar documentos 
+•	Adjuntar evidencias 
+Violentómetro digital: Clasificación:
+•	Bajo 
+•	Moderado 
+•	Alto 
+•	Crítico 
+IA aplicada
+•	Detección de nivel de riesgo 
+•	Clasificación automática 
+•	Priorización de casos 
+Dirección a profesionales
+Consulta: ¿Desea ser direccionada a una profesional? 
+•	Abogadas 
+•	Psicólogas 
+•	Trabajadoras sociales 
+SUBMÓDULO 7.2 — OPORTUNIDADES
+Objetivo
+Fortalecer capacidades y oportunidades para mujeres.
+1. Formación
+Modalidades
+•	Virtual 
+•	Presencial 
+•	Híbrida 
+2. Becas 
+3. Empleo y oportunidades
+•	Bolsa de trabajo 
+•	Voluntariado 
+•	Pasantías 
+•	Convocatorias 
+SUBMÓDULO 7.3 — EVENTOS DE ORGANIZACIONES SOCIALES
+Funcionalidades
+•	Agenda social 
+•	Registro 
+•	Convocatorias 
+•	Eventos territoriales 
+MÓDULO 8 — INTELIGENCIA DE DATOS
+SOLO PARA SOCIAS Y ADMINISTRACIÓN
+Objetivo
+Centralizar análisis estratégico institucional.
+Funcionalidades
+Dashboard ejecutivo
+•	Estadísticas institucionales 
+•	KPIs 
+•	Indicadores 
+Reportes
+•	PDF 
+•	Excel 
+•	Power BI 
+IA y Big Data
+•	Tendencias 
+•	Análisis predictivo 
+•	Segmentación 
+•	Modelos estadísticos 
+CHATBOT WHATSAPP + IA
+Objetivo
+Automatizar atención inicial.
+Funcionalidades
+•	Respuestas automáticas 
+•	Captación de clientes 
+•	Agenda de reuniones 
+•	Información de cursos 
+•	Derivación automática 
+IA aplicada
+•	NLP 
+•	Análisis de intención 
+•	Aprendizaje automático 
+Front-end
+Colores
+•	Violeta institucional 
+•	Blanco 
+•	Gris claro 
+Características UX
+•	Responsive 
+•	Accesible 
+•	Minimalista 
+•	Navegación intuitiva 
