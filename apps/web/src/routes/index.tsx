@@ -22,10 +22,9 @@ import { NotFoundPage } from '../pages/not-found';
 export function AppRouter() {
   return (
     <Routes>
-      <Route element={<PublicLayout />}>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/about" element={<AboutPage />} />
-        <Route path="/equipo" element={<TeamPage />} />
+      <Route element={<DashboardLayout />}>
+        <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/admin/formularios" element={<AdminFormsPage />} />
         <Route path="/proyectos" element={<ProjectsPage />} />
         <Route path="/proyectos/:id" element={<ProjectDetailPage />} />
         <Route path="/formacion" element={<CoursesPage />} />
@@ -36,13 +35,14 @@ export function AppRouter() {
         <Route path="/eventos" element={<EventsPage />} />
         <Route path="/certificados" element={<CertificatesPage />} />
         <Route path="/certificados/verify/:code" element={<CertificatesPage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/registro" element={<RegisterPage />} />
       </Route>
 
-      <Route element={<DashboardLayout />}>
-        <Route path="/dashboard" element={<DashboardPage />} />
-        <Route path="/admin/formularios" element={<AdminFormsPage />} />
+      <Route element={<PublicLayout />}>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/about" element={<AboutPage />} />
+        <Route path="/equipo" element={<TeamPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/registro" element={<RegisterPage />} />
       </Route>
 
       <Route path="*" element={<NotFoundPage />} />
