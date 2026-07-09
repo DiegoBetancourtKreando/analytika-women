@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Param, Body, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Param, Body, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
@@ -50,5 +50,17 @@ export class DynamicFormsController {
       page ? parseInt(page, 10) : 1,
       limit ? parseInt(limit, 10) : 10,
     );
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'MANAGER')
+  @Patch(':code/fields/:fieldId')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Actualizar estado de un campo' })
+  updateField(
+    @Param('fieldId') fieldId: string,
+    @Body() body: { isActive?: boolean },
+  ) {
+    return this.dynamicFormsService.updateField(fieldId, body);
   }
 }

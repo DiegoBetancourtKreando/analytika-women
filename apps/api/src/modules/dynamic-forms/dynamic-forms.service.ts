@@ -79,10 +79,19 @@ export class DynamicFormsService {
 
   async findAll() {
     return this.prisma.dynamicForm.findMany({
-      where: { isActive: true },
       include: {
+        fields: {
+          orderBy: { order: 'asc' },
+        },
         _count: { select: { fields: true, submissions: true } },
       },
+    });
+  }
+
+  async updateField(fieldId: string, data: { isActive?: boolean }) {
+    return this.prisma.dynamicField.update({
+      where: { id: fieldId },
+      data,
     });
   }
 }

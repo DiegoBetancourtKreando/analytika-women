@@ -13,6 +13,7 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
+  FileText,
 } from 'lucide-react';
 import { useState } from 'react';
 import { useAuthStore } from '../stores/auth-store';
@@ -26,6 +27,10 @@ const menuItems = [
   { icon: GraduationCap, label: 'Formación', path: '/formacion' },
   { icon: Sparkles, label: 'Oportunidades', path: '/oportunidades' },
   { icon: Calendar, label: 'Eventos', path: '/eventos' },
+];
+
+const adminMenuItems = [
+  { icon: FileText, label: 'Formularios', path: '/admin/formularios' },
 ];
 
 export function Sidebar() {
@@ -78,7 +83,28 @@ export function Sidebar() {
         })}
       </nav>
 
-      <div className="border-t border-gray-200 p-3">
+      <div className="border-t border-gray-200 p-3 space-y-1">
+        <p className={`px-3 text-xs font-medium text-gray-400 uppercase tracking-wider ${collapsed ? 'hidden' : ''}`}>
+          Admin
+        </p>
+        {adminMenuItems.map((item) => {
+          const isActive = location.pathname === item.path;
+          return (
+            <Link
+              key={item.path}
+              to={item.path}
+              className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                isActive
+                  ? 'bg-violet-50 text-violet-700'
+                  : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+              }`}
+              title={collapsed ? item.label : undefined}
+            >
+              <item.icon className="h-5 w-5 shrink-0" />
+              {!collapsed && item.label}
+            </Link>
+          );
+        })}
         <button
           type="button"
           onClick={logout}

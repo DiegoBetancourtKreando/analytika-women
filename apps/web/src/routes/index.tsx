@@ -16,6 +16,7 @@ import { CertificatesPage } from '../pages/certificates';
 import { LoginPage } from '../pages/login';
 import { RegisterPage } from '../pages/register';
 import { DashboardPage } from '../pages/dashboard';
+import { AdminFormsPage } from '../pages/admin/forms';
 import { NotFoundPage } from '../pages/not-found';
 
 export function AppRouter() {
@@ -41,6 +42,7 @@ export function AppRouter() {
 
       <Route element={<DashboardLayout />}>
         <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/admin/formularios" element={<AdminFormsPage />} />
       </Route>
 
       <Route path="*" element={<NotFoundPage />} />
