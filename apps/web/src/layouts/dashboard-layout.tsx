@@ -1,12 +1,13 @@
 import { Outlet, Navigate } from 'react-router-dom';
 import { Sidebar } from '../components/sidebar';
 import { DashboardHeader } from '../components/dashboard-header';
-import { useAuth } from '../hooks/use-auth';
+import { useAuthStore } from '../stores/auth-store';
 
 export function DashboardLayout() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const isInitializing = useAuthStore((s) => s.isInitializing);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
-  if (isLoading) {
+  if (isInitializing) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-violet-600 border-t-transparent" />

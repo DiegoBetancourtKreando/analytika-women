@@ -6,6 +6,7 @@ import { clearTokens, getAccessToken } from '../services/api';
 interface AuthState {
   user: User | null;
   isLoading: boolean;
+  isInitializing: boolean;
   isAuthenticated: boolean;
   error: string | null;
 
@@ -19,27 +20,28 @@ interface AuthState {
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   isLoading: false,
+  isInitializing: true,
   isAuthenticated: false,
   error: null,
 
   initialize: async () => {
     const token = getAccessToken();
     if (!token) {
-      set({ isLoading: false, isAuthenticated: false });
+      set({ isLoading: false, isInitializing: false, isAuthenticated: false });
       return;
     }
 
     try {
       const user = await getMe();
-      set({ user, isAuthenticated: true, isLoading: false });
+      set({ user, isAuthenticated: true, isLoading: false, isInitializing: false });
     } catch {
       clearTokens();
-      set({ user: null, isAuthenticated: false, isLoading: false });
+      set({ user: null, isAuthenticated: false, isLoading: false, isInitializing: false });
     }
   },
 
   login: async (email, password) => {
-    set({ isLoading: true, error: null });
+    set({ isLoading: true, error: null, isInitializing: false });
     try {
       const response = await apiLogin({ email, password });
       set({ user: response.user, isAuthenticated: true, isLoading: false });
@@ -51,7 +53,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   register: async (data: { email: string; password: string; firstName: string; lastName: string; phone?: string }) => {
-    set({ isLoading: true, error: null });
+    set({ isLoading: true, error: null, isInitializing: false });
     try {
       const response = await apiRegister(data);
       set({ user: response.user, isAuthenticated: true, isLoading: false });
