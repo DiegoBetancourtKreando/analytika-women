@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Input, Select, Badge, Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, useToast } from '@analytika/ui';
-import { Plus, Pencil, Trash2, FileText, Eye, EyeOff, RefreshCw, XCircle } from 'lucide-react';
+import { Card, CardContent, Button, Input, Badge, Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, useToast } from '@analytika/ui';
+import { Plus, Trash2, FileText, Eye, EyeOff, RefreshCw, XCircle, ArrowLeft } from 'lucide-react';
 import { apiGet, apiPost, apiPatch, apiDelete } from '../../services/api';
 
 interface DynamicField {
@@ -25,7 +25,6 @@ export function AdminFormsPage() {
   const [forms, setForms] = useState<DynamicForm[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedForm, setSelectedForm] = useState<DynamicForm | null>(null);
-  const [showDetail, setShowDetail] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [showAddField, setShowAddField] = useState(false);
   const [showEditField, setShowEditField] = useState<DynamicField | null>(null);
@@ -51,20 +50,20 @@ export function AdminFormsPage() {
     setSaving(true);
     try {
       await apiPost('/forms', { code: newForm.code, name: newForm.name, description: newForm.name });
-      addToast({ type: 'success', title: 'Creado', description: 'Categoría creada correctamente' });
+      addToast({ type: 'success', title: 'Creado' });
       setShowCreateForm(false);
       setNewForm({ code: '', name: '' });
       loadForms();
-    } catch { addToast({ type: 'error', title: 'Error', description: 'No se pudo crear' }); }
+    } catch { addToast({ type: 'error', title: 'Error' }); }
     finally { setSaving(false); }
   }
 
   async function handleDeleteForm(code: string) {
-    if (!confirm('¿Eliminar esta categoría y todas sus preguntas?')) return;
+    if (!confirm('¿Eliminar esta categoría?')) return;
     try {
       await apiDelete(`/forms/${code}`);
       addToast({ type: 'success', title: 'Eliminado' });
-      if (selectedForm?.code === code) { setShowDetail(false); setSelectedForm(null); }
+      if (selectedForm?.code === code) { setSelectedForm(null); }
       loadForms();
     } catch { addToast({ type: 'error', title: 'Error' }); }
   }
@@ -75,17 +74,13 @@ export function AdminFormsPage() {
     try {
       const key = newField.label.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '') || 'campo';
       await apiPost(`/forms/${selectedForm.code}/fields`, {
-        key,
-        label: newField.label,
-        type: newField.type,
+        key, label: newField.label, type: newField.type,
         options: newField.type === 'checkbox' ? newField.options : null,
       });
       addToast({ type: 'success', title: 'Pregunta agregada' });
       setShowAddField(false);
       setNewField({ label: '', type: 'text', options: [] });
-      loadForms();
-      const updated = await apiGet<any>(`/forms/${selectedForm.code}`);
-      setSelectedForm(updated);
+      await refreshSelected(selectedForm.code);
     } catch { addToast({ type: 'error', title: 'Error' }); }
     finally { setSaving(false); }
   }
@@ -94,16 +89,12 @@ export function AdminFormsPage() {
     if (!showEditField || !selectedForm) return;
     setSaving(true);
     try {
-      await apiPatch(`/forms/${selectedForm.code}/fields/${(showEditField as any).id}`, {
-        label: showEditField.label,
-        type: showEditField.type,
-        options: showEditField.type === 'checkbox' ? showEditField.options : null,
-      });
-      addToast({ type: 'success', title: 'Pregunta actualizada' });
+      const body: any = { label: showEditField.label, type: showEditField.type };
+      if (showEditField.type === 'checkbox') body.options = showEditField.options;
+      await apiPatch(`/forms/${selectedForm.code}/fields/${(showEditField as any).id}`, body);
+      addToast({ type: 'success', title: 'Actualizada' });
       setShowEditField(null);
-      loadForms();
-      const updated = await apiGet<any>(`/forms/${selectedForm.code}`);
-      setSelectedForm(updated);
+      await refreshSelected(selectedForm.code);
     } catch { addToast({ type: 'error', title: 'Error' }); }
     finally { setSaving(false); }
   }
@@ -112,10 +103,8 @@ export function AdminFormsPage() {
     if (!selectedForm || !confirm('¿Eliminar esta pregunta?')) return;
     try {
       await apiDelete(`/forms/${selectedForm.code}/fields/${fieldId}`);
-      addToast({ type: 'success', title: 'Pregunta eliminada' });
-      loadForms();
-      const updated = await apiGet<any>(`/forms/${selectedForm.code}`);
-      setSelectedForm(updated);
+      addToast({ type: 'success', title: 'Eliminada' });
+      await refreshSelected(selectedForm.code);
     } catch { addToast({ type: 'error', title: 'Error' }); }
   }
 
@@ -123,28 +112,136 @@ export function AdminFormsPage() {
     if (!selectedForm) return;
     try {
       await apiPatch(`/forms/${selectedForm.code}/fields/${fieldId}`, { isActive: !isActive });
-      loadForms();
-      const updated = await apiGet<any>(`/forms/${selectedForm.code}`);
-      setSelectedForm(updated);
+      await refreshSelected(selectedForm.code);
     } catch { addToast({ type: 'error', title: 'Error' }); }
+  }
+
+  async function refreshSelected(code: string) {
+    const updated = await apiGet<any>(`/forms/${code}`);
+    setSelectedForm(updated);
+    setForms(prev => prev.map(f => f.code === code ? { ...updated, fields: updated.fields ?? [] } : f));
   }
 
   async function handleSetupDefaults() {
     setSetupLoading(true);
     try {
       const result = await apiPost<any>('/forms/setup');
-      addToast({ type: 'success', title: result.message ?? 'Formularios creados' });
+      addToast({ type: 'success', title: result.message ?? 'Creados' });
       loadForms();
     } catch { addToast({ type: 'error', title: 'Error' }); }
     finally { setSetupLoading(false); }
   }
 
-  async function openFormDetail(form: DynamicForm) {
+  async function selectForm(form: DynamicForm) {
     try {
       const data = await apiGet<any>(`/forms/${form.code}`);
       setSelectedForm(data);
-      setShowDetail(true);
     } catch { addToast({ type: 'error', title: 'Error' }); }
+  }
+
+  if (selectedForm) {
+    const fields = selectedForm.fields ?? [];
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-4">
+          <button onClick={() => setSelectedForm(null)} className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
+            <ArrowLeft className="h-5 w-5 text-gray-600" />
+          </button>
+          <div className="flex-1">
+            <div className="flex items-center gap-3">
+              <h1 className="text-2xl font-bold text-gray-900">{selectedForm.name}</h1>
+              <button onClick={() => handleDeleteForm(selectedForm.code)} className="p-1.5 text-gray-400 hover:text-red-600"><Trash2 className="h-4 w-4" /></button>
+            </div>
+            <p className="text-sm text-gray-500">Código: <span className="font-mono">{selectedForm.code}</span></p>
+          </div>
+          <Button onClick={() => { setNewField({ label: '', type: 'text', options: [] }); setShowAddField(true); }}>
+            <Plus className="mr-2 h-4 w-4" /> Agregar Pregunta
+          </Button>
+        </div>
+
+        {fields.length === 0 ? (
+          <div className="py-16 text-center text-gray-400">No hay preguntas. Agrega la primera.</div>
+        ) : (
+          <div className="space-y-3">
+            {fields.filter(f => f.id).map((field, idx) => (
+              <div key={field.id} className={`flex items-start gap-4 rounded-lg border p-4 ${field.isActive ? 'border-gray-200 bg-white' : 'border-gray-100 bg-gray-50 opacity-60'}`}>
+                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-violet-100 text-xs font-bold text-violet-700 shrink-0">{idx + 1}</div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-medium text-gray-900">{field.label}</span>
+                    <Badge variant="secondary" className="text-xs">{field.type === 'checkbox' ? 'Selección múltiple' : 'Texto'}</Badge>
+                  </div>
+                  {field.options && field.options.length > 0 && (
+                    <div className="mt-1 flex flex-wrap gap-1">
+                      {field.options.map((opt, i) => (
+                        <Badge key={i} variant="outline" className="text-xs">{opt.label}</Badge>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  <button onClick={() => setShowEditField({ ...field, options: field.options ?? [] })} className="p-1.5 text-gray-400 hover:text-violet-600"><svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg></button>
+                  <button onClick={() => handleToggleField(field.id, field.isActive)} className="p-1.5 text-gray-400 hover:text-violet-600">{field.isActive ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}</button>
+                  <button onClick={() => handleDeleteField(field.id)} className="p-1.5 text-gray-400 hover:text-red-600"><Trash2 className="h-4 w-4" /></button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Modal Add Field */}
+        <Dialog open={showAddField} onOpenChange={setShowAddField}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader><DialogTitle>Nueva Pregunta</DialogTitle></DialogHeader>
+            <div className="space-y-4">
+              <Input label="Etiqueta" value={newField.label} onChange={(e) => setNewField({ ...newField, label: e.target.value })} placeholder="ej: ¿Cuál es tu nombre?" />
+              <label className="block text-sm font-medium text-gray-700">Tipo</label>
+              <select className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" value={newField.type} onChange={(e) => setNewField({ ...newField, type: e.target.value })}>
+                <option value="text">Texto</option>
+                <option value="checkbox">Selección múltiple</option>
+              </select>
+              {newField.type === 'checkbox' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Opciones</label>
+                  <OptionsEditor options={newField.options} onChange={(opts) => setNewField({ ...newField, options: opts })} />
+                </div>
+              )}
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowAddField(false)}>Cancelar</Button>
+              <Button onClick={handleAddField} isLoading={saving}>Agregar</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Modal Edit Field */}
+        {showEditField && (
+          <Dialog open={!!showEditField} onOpenChange={() => setShowEditField(null)}>
+            <DialogContent className="max-w-lg">
+              <DialogHeader><DialogTitle>Editar Pregunta</DialogTitle></DialogHeader>
+              <div className="space-y-4">
+                <Input label="Etiqueta" value={showEditField.label} onChange={(e) => setShowEditField({ ...showEditField, label: e.target.value })} />
+                <label className="block text-sm font-medium text-gray-700">Tipo</label>
+                <select className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" value={showEditField.type} onChange={(e) => setShowEditField({ ...showEditField, type: e.target.value })}>
+                  <option value="text">Texto</option>
+                  <option value="checkbox">Selección múltiple</option>
+                </select>
+                {showEditField.type === 'checkbox' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Opciones</label>
+                    <OptionsEditor options={(showEditField as any).options ?? []} onChange={(opts) => setShowEditField({ ...showEditField, options: opts })} />
+                  </div>
+                )}
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setShowEditField(null)}>Cancelar</Button>
+                <Button onClick={handleUpdateField} isLoading={saving}>Guardar</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        )}
+      </div>
+    );
   }
 
   return (
@@ -152,12 +249,11 @@ export function AdminFormsPage() {
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Formularios Dinámicos</h1>
-          <p className="text-sm text-gray-500">Crea categorías y preguntas para los formularios</p>
+          <p className="text-sm text-gray-500">Crea categorías y preguntas</p>
         </div>
         <div className="flex items-center gap-3">
           <Button variant="outline" size="sm" onClick={handleSetupDefaults} isLoading={setupLoading}>
-            <RefreshCw className={`mr-2 h-4 w-4 ${setupLoading ? 'animate-spin' : ''}`} />
-            Por defecto
+            <RefreshCw className={`mr-2 h-4 w-4 ${setupLoading ? 'animate-spin' : ''}`} /> Por defecto
           </Button>
           <Button onClick={() => setShowCreateForm(true)} size="sm">
             <Plus className="mr-2 h-4 w-4" /> Nueva Categoría
@@ -177,7 +273,7 @@ export function AdminFormsPage() {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {forms.map((form) => (
             <motion.div key={form.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-              <Card className="cursor-pointer transition-all hover:shadow-md" onClick={() => openFormDetail(form)}>
+              <Card className="cursor-pointer transition-all hover:shadow-md" onClick={() => selectForm(form)}>
                 <CardContent className="p-6">
                   <div className="flex items-center gap-3 mb-3">
                     <FileText className="h-5 w-5 shrink-0 text-violet-600" />
@@ -199,6 +295,7 @@ export function AdminFormsPage() {
         </div>
       )}
 
+      {/* Modal Create Category */}
       <Dialog open={showCreateForm} onOpenChange={setShowCreateForm}>
         <DialogContent>
           <DialogHeader><DialogTitle>Nueva Categoría</DialogTitle></DialogHeader>
@@ -212,111 +309,6 @@ export function AdminFormsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {showDetail && selectedForm && (
-        <Dialog open={showDetail} onOpenChange={setShowDetail}>
-          <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
-            <DialogHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <DialogTitle>{selectedForm.name}</DialogTitle>
-                  <DialogDescription>Código: <span className="font-mono">{selectedForm.code}</span></DialogDescription>
-                </div>
-                <Button variant="outline" size="sm" onClick={() => handleDeleteForm(selectedForm.code)}><Trash2 className="h-4 w-4 text-red-500" /></Button>
-              </div>
-            </DialogHeader>
-
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-medium text-gray-700">Preguntas ({selectedForm.fields?.length ?? 0})</h3>
-              <Button size="sm" onClick={() => { setNewField({ label: '', type: 'text', options: [] }); setShowAddField(true); }}>
-                <Plus className="mr-2 h-4 w-4" /> Agregar Pregunta
-              </Button>
-            </div>
-
-            {(!selectedForm.fields || selectedForm.fields.length === 0) ? (
-              <div className="py-8 text-center text-gray-400">No hay preguntas.</div>
-            ) : (
-              <div className="space-y-2">
-                {selectedForm.fields.filter(f => f.id).map((field, idx) => (
-                  <div key={field.id} className={`flex items-start gap-4 rounded-lg border p-4 ${field.isActive ? 'border-gray-200 bg-white' : 'border-gray-100 bg-gray-50 opacity-60'}`}>
-                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-violet-100 text-xs font-bold text-violet-700 shrink-0">{idx + 1}</div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-medium text-gray-900">{field.label}</span>
-                        <Badge variant="secondary" className="text-xs">{field.type === 'checkbox' ? 'Selección múltiple' : 'Texto'}</Badge>
-                      </div>
-                      {field.options && Array.isArray(field.options) && field.options.length > 0 && (
-                        <div className="mt-1 flex flex-wrap gap-1">
-                          {field.options.map((opt, i) => (
-                            <Badge key={i} variant="outline" className="text-xs">{opt.label}</Badge>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-1 shrink-0">
-                      <button onClick={() => setShowEditField({ ...field, options: field.options ?? [] })} className="p-1.5 text-gray-400 hover:text-violet-600"><Pencil className="h-4 w-4" /></button>
-                      <button onClick={() => handleToggleField(field.id, field.isActive)} className="p-1.5 text-gray-400 hover:text-violet-600">{field.isActive ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}</button>
-                      <button onClick={() => handleDeleteField(field.id)} className="p-1.5 text-gray-400 hover:text-red-600"><Trash2 className="h-4 w-4" /></button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setShowDetail(false)}>Cerrar</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      )}
-
-      <Dialog open={showAddField} onOpenChange={setShowAddField}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader><DialogTitle>Nueva Pregunta</DialogTitle></DialogHeader>
-          <div className="space-y-4">
-            <Input label="Etiqueta" value={newField.label} onChange={(e) => setNewField({ ...newField, label: e.target.value })} placeholder="ej: ¿Cuál es tu nombre?" />
-            <Select label="Tipo" options={[{ value: 'text', label: 'Texto' }, { value: 'checkbox', label: 'Selección múltiple' }]} value={newField.type} onChange={(e) => setNewField({ ...newField, type: e.target.value, options: e.target.value === 'checkbox' ? [] : [] })} />
-            {newField.type === 'checkbox' && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Opciones</label>
-                <OptionsEditor
-                  options={newField.options}
-                  onChange={(opts) => setNewField({ ...newField, options: opts })}
-                />
-              </div>
-            )}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowAddField(false)}>Cancelar</Button>
-            <Button onClick={handleAddField} isLoading={saving}>Agregar</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {showEditField && (
-        <Dialog open={!!showEditField} onOpenChange={() => setShowEditField(null)}>
-          <DialogContent className="max-w-lg">
-            <DialogHeader><DialogTitle>Editar Pregunta</DialogTitle></DialogHeader>
-            <div className="space-y-4">
-              <Input label="Etiqueta" value={showEditField.label} onChange={(e) => setShowEditField({ ...showEditField, label: e.target.value })} />
-              <Select label="Tipo" options={[{ value: 'text', label: 'Texto' }, { value: 'checkbox', label: 'Selección múltiple' }]} value={showEditField.type} onChange={(e) => setShowEditField({ ...showEditField, type: e.target.value })} />
-              {showEditField.type === 'checkbox' && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Opciones</label>
-                  <OptionsEditor
-                    options={(showEditField as any).options ?? []}
-                    onChange={(opts) => setShowEditField({ ...showEditField, options: opts })}
-                  />
-                </div>
-              )}
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setShowEditField(null)}>Cancelar</Button>
-              <Button onClick={handleUpdateField} isLoading={saving}>Guardar</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      )}
     </div>
   );
 }
