@@ -7,10 +7,9 @@ export class DynamicFormsService {
 
   async findByCode(code: string) {
     const form = await this.prisma.dynamicForm.findUnique({
-      where: { code, isActive: true },
+      where: { code },
       include: {
         fields: {
-          where: { isActive: true },
           orderBy: { order: 'asc' },
         },
       },
