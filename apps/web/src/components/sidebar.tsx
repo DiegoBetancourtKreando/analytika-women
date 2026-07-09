@@ -20,14 +20,12 @@ import { useAuthStore } from '../stores/auth-store';
 const menuItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
   { icon: FolderKanban, label: 'Proyectos', path: '/proyectos' },
-  { icon: Users, label: 'Usuarios', path: '/dashboard/usuarios' },
+  { icon: Shield, label: 'Denuncias', path: '/denuncia' },
   { icon: Briefcase, label: 'Consultores', path: '/consultores' },
   { icon: Building2, label: 'Organizaciones', path: '/organizaciones' },
   { icon: GraduationCap, label: 'Formación', path: '/formacion' },
-  { icon: Shield, label: 'Denuncias', path: '/denuncia' },
   { icon: Sparkles, label: 'Oportunidades', path: '/oportunidades' },
   { icon: Calendar, label: 'Eventos', path: '/eventos' },
-  { icon: Settings, label: 'Configuración', path: '/configuracion' },
 ];
 
 export function Sidebar() {
